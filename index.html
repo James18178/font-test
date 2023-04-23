@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>电子签名</title>
+    <script>var saveAs=saveAs||function(e){"use strict";if(typeof e==="undefined"||typeof navigator!=="undefined"&&/MSIE [1-9]\./.test(navigator.userAgent)){return}var t=e.document,n=function(){return e.URL||e.webkitURL||e},r=t.createElementNS("http://www.w3.org/1999/xhtml","a"),o="download"in r,a=function(e){var t=new MouseEvent("click");e.dispatchEvent(t)},i=/constructor/i.test(e.HTMLElement)||e.safari,f=/CriOS\/[\d]+/.test(navigator.userAgent),u=function(t){(e.setImmediate||e.setTimeout)(function(){throw t},0)},s="application/octet-stream",d=1e3*40,c=function(e){var t=function(){if(typeof e==="string"){n().revokeObjectURL(e)}else{e.remove()}};setTimeout(t,d)},l=function(e,t,n){t=[].concat(t);var r=t.length;while(r--){var o=e["on"+t[r]];if(typeof o==="function"){try{o.call(e,n||e)}catch(a){u(a)}}}},p=function(e){if(/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(e.type)){return new Blob([String.fromCharCode(65279),e],{type:e.type})}return e},v=function(t,u,d){if(!d){t=p(t)}var v=this,w=t.type,m=w===s,y,h=function(){l(v,"writestart progress write writeend".split(" "))},S=function(){if((f||m&&i)&&e.FileReader){var r=new FileReader;r.onloadend=function(){var t=f?r.result:r.result.replace(/^data:[^;]*;/,"data:attachment/file;");var n=e.open(t,"_blank");if(!n)e.location.href=t;t=undefined;v.readyState=v.DONE;h()};r.readAsDataURL(t);v.readyState=v.INIT;return}if(!y){y=n().createObjectURL(t)}if(m){e.location.href=y}else{var o=e.open(y,"_blank");if(!o){e.location.href=y}}v.readyState=v.DONE;h();c(y)};v.readyState=v.INIT;if(o){y=n().createObjectURL(t);setTimeout(function(){r.href=y;r.download=u;a(r);h();c(y);v.readyState=v.DONE});return}S()},w=v.prototype,m=function(e,t,n){return new v(e,t||e.name||"download",n)};if(typeof navigator!=="undefined"&&navigator.msSaveOrOpenBlob){return function(e,t,n){t=t||e.name||"download";if(!n){e=p(e)}return navigator.msSaveOrOpenBlob(e,t)}}w.abort=function(){};w.readyState=w.INIT=0;w.WRITING=1;w.DONE=2;w.error=w.onwritestart=w.onprogress=w.onwrite=w.onabort=w.onerror=w.onwriteend=null;return m}(typeof self!=="undefined"&&self||typeof window!=="undefined"&&window||this.content);if(typeof module!=="undefined"&&module.exports){module.exports.saveAs=saveAs}else if(typeof define!=="undefined"&&define!==null&&define.amd!==null){define("FileSaver.js",function(){return saveAs})}</script>
+</head>
+<style type="text/css">
+    *{margin: 0;padding: 0;}
+    .canvas {
+        /*width: 100%;*/
+        display: block;
+        border: 1px solid red;
+    }
+    #clear {
+        margin: 0 auto;
+        display: inline-block;
+        padding: 5px 10px;
+        width: 128px;
+        height: 40px;
+        line-height: 40px;
+        border: 1px solid #eee;
+        background: #e1e1e1;
+        border-radius: 10px;
+        text-align: center;
+        margin: 20px auto;
+        cursor: pointer;
+    }
+ 
+    #save {
+        margin: 0 auto;
+        display: inline-block;
+        padding: 5px 10px;
+        width: 100px;
+        height: 40px;
+        line-height: 40px;
+        border: 1px solid #eee;
+        background: #e1e1e1;
+        border-radius: 10px;
+        text-align: center;
+        margin: 20px auto;
+        cursor: pointer;
+ 
+    }
+    #save_data {
+        margin: 0 auto;
+        display: inline-block;
+        padding: 5px 10px;
+        width: 100px;
+        height: 40px;
+        line-height: 40px;
+        border: 1px solid #eee;
+        background: #e1e1e1;
+        border-radius: 10px;
+        text-align: center;
+        margin: 20px auto;
+        cursor: pointer;
+ 
+    }
+</style>
+<input type="hidden" id="tjbh" value="${tjbh}">
+<input type="hidden" id="signType" value="${signType}">
+<body data-ext-version="1.4.2">
+<div style="text-align: center">
+<canvas id="canvas" width="400" height="200" style="border:1px solid #000000;">
+    您的浏览器不支持canvas技术,请升级浏览器!
+</canvas>
+<div>
+    <span id="clear">清空签名板</span>
+    <span id="save">提交单字</span>
+    <span id="save_data">导出数据</span>
+    <br/>
+    名称：<input id = "username"/>
+    <h1 id="tips" style="color:red;display:none;">当前用户记录成功</h1>
+</div>
+<div style="display: flex;flex-direction: row;justify-content: space-around;align-items: flex-start;">
+<div  id="output" style="
+display: flex;
+flex-direction: column;
+">
+<h1>数据</h1>
+   <div id="output" style="
+   display: flex;
+   flex-direction: column;
+"></div> 
+</div>
+<div style="
+display: flex;
+flex-direction: column;
+">
+<h1>缓冲区</h1>
+<div id="output1" style="
+display: flex;
+flex-direction: column;
+"></div>
+</div>
+</div>
+</div>
+</body>
+<script type="text/javascript">
+    function WriteFont(id, options) {
+        var self = this;
+        this.canvas = document.getElementById(id);
+        var obj = {
+            canvas: this.canvas,
+            context: this.canvas.getContext("2d"),
+            isWrite: false, //是否开始
+            lastWriteTime: -1,
+            lastWriteSpeed: 0,
+            lastWriteWidth: 0,
+            canvasHeight: 363, //canvas宽高
+            canvasWidth:  269,
+            isShowBorder: true, //是否显示网格
+            bgColor: '#fff', //背景色
+            borderWidth: 2, // 网格线宽度
+            borderColor: "#fff", //网格颜色
+            lastPoint: {}, //
+            writeWidth: 2, //基础轨迹宽度
+            maxWriteWidth: 30, // 写字模式最大线宽
+            minWriteWidth: 1, // 写字模式最小线宽
+            writeColor: '#000', // 轨迹颜色
+            isWriteName:false //签名模式
+        }
+ 
+        for(var name in options) {
+            obj[name] = options[name];
+        }
+ 
+        /**
+         * 轨迹宽度
+         */
+        this.setLineWidth = function() {
+            var nowTime = new Date().getTime();
+            var diffTime = nowTime - obj.lastWriteTime;
+            obj.lastWriteTime = nowTime;
+            var returnNum = obj.minWriteWidth + (obj.maxWriteWidth - obj.minWriteWidth) * diffTime / 30;
+            if(returnNum < obj.minWriteWidth) {
+                returnNum = obj.minWriteWidth;
+            } else if(returnNum > obj.maxWriteWidth) {
+                returnNum = obj.maxWriteWidth;
+            }
+ 
+            returnNum = returnNum.toFixed(2);
+//写字模式和签名模式
+            if(obj.isWriteName){
+                obj.context.lineWidth = obj.writeWidth;
+            }else{
+                obj.context.lineWidth = obj.lastWriteWidth = obj.lastWriteWidth / 4 * 3 + returnNum / 4;
+            }
+        }
+ 
+        /**
+         * 绘制轨迹
+         */
+        this.writing = function(point) {
+            obj.context.beginPath();
+            obj.context.moveTo(obj.lastPoint.x, obj.lastPoint.y);
+            obj.context.lineTo(point.x, point.y);
+            self.setLineWidth();
+            obj.context.stroke();
+            obj.lastPoint = point;
+            obj.context.closePath();
+        }
+ 
+        /**
+         * 轨迹样式
+         */
+        this.writeContextStyle = function() {
+            obj.context.beginPath();
+            obj.context.strokeStyle = obj.writeColor;
+            obj.context.lineCap = 'round';
+            obj.context.lineJoin = "round";
+        }
+ 
+        /**
+         * 写开始
+         */
+        this.writeBegin = function(point) {
+            obj.isWrite = true;
+            obj.lastWriteTime = new Date().getTime();
+            obj.lastPoint = point;
+            self.writeContextStyle();
+        }
+ 
+        /**
+         * 写结束
+         */
+        this.writeEnd = function() {
+            obj.isWrite = false;
+        }
+ 
+        /**
+         * 清空画板
+         */
+        this.canvasClear = function() {
+            obj.context.save();
+            obj.context.strokeStyle = '#fff';
+            obj.context.clearRect(0, 0, obj.canvasWidth, obj.canvasHeight);
+            if(obj.isShowBorder && !obj.isWriteName) {
+                obj.context.beginPath();
+                var size = obj.borderWidth / 2;
+//画外面的框
+                obj.context.moveTo(size, size);
+                obj.context.lineTo(obj.canvasWidth - size, size);
+                obj.context.lineTo(obj.canvasWidth - size, obj.canvasHeight - size);
+                obj.context.lineTo(size, obj.canvasHeight - size);
+                obj.context.closePath();
+                obj.context.lineWidth = obj.borderWidth;
+                obj.context.strokeStyle = obj.borderColor;
+                obj.context.stroke();
+//画里面的框
+                obj.context.moveTo(0, 0);
+                obj.context.lineTo(obj.canvasWidth, obj.canvasHeight);
+                obj.context.lineTo(obj.canvasWidth, obj.canvasHeight / 2);
+                obj.context.lineTo(obj.canvasWidth, obj.canvasHeight / 2);
+                obj.context.lineTo(0, obj.canvasHeight / 2);
+                obj.context.lineTo(0, obj.canvasHeight);
+                obj.context.lineTo(obj.canvasWidth, 0);
+                obj.context.lineTo(obj.canvasWidth / 2, 0);
+                obj.context.lineTo(obj.canvasWidth / 2, obj.canvasHeight);
+                obj.context.stroke();
+ 
+            }
+            obj.context.restore();
+        }
+ 
+        /**
+         * 保存图片 格式base64
+         */
+        this.saveAsImg = function() {
+            var image = new Image();
+            image.src = this.canvas.toDataURL("image/png");
+            return image.src;
+            if(image.src == this.emptyCanvas) {
+                alert('请先签名')
+                return;
+            }
+            if(!confirm("你确定提交当前的签名吗?")){
+                console.log("你确定提交当前的签名吗?-->NO");
+                return;
+            }
+            var base64Image=image.src;
+            console.log('提交的内容===>', image.src)
+            var params={
+                "tjbh":jQuery("#tjbh").val(),
+                "signType":jQuery("#signType").val(),
+                "picture":base64Image
+            }
+            jQuery.ajax({
+                url:"autoGraphAction_index_submitSign.do",
+                type:"post",
+                data:params,
+                dataType:"json",
+                success:function(data){
+                    //alert("data:"+JSON.stringify(data))
+                    if(data.code!=200){
+                      alert(data.message);
+                      return;
+                    }
+                    alert(data.message);
+                },
+                error:function(data,textStatus){
+                    alert("网络连接错误，请稍后再试!");
+ 
+                }
+            });
+ 
+        };
+ 
+        /**
+         * 初始化画板
+         */
+        this.canvasInit = function() {
+            this.canvas.width = obj.canvasWidth;
+            this.canvas.height = obj.canvasHeight;
+            this.emptyCanvas = this.canvas.toDataURL("image/png");
+        }
+ 
+        /**======================事件绑定===========================**/
+ 
+        this.canvas.addEventListener('mousedown', function(e) {
+            var point = {
+                x: e.offsetX || e.clientX,
+                y: e.offsetY || e.clientY
+            };
+            self.writeBegin(point);
+        });
+ 
+        this.canvas.addEventListener('mouseup', function(e) {
+            var point = {
+                x: e.offsetX,
+                y: e.offsetY
+            };
+            self.writeEnd(point);
+        });
+ 
+        this.canvas.addEventListener('mouseleave', function(e) {
+            var point = {
+                x: e.offsetX,
+                y: e.offsetY
+            };
+            self.writeEnd(point);
+        });
+ 
+        this.canvas.addEventListener('mousemove', function(e) {
+            if(obj.isWrite) {
+                var point = {
+                    x: e.offsetX,
+                    y: e.offsetY
+                };
+ 
+                self.writing(point);
+            }
+        });
+ 
+//移动端
+        this.canvas.addEventListener('touchstart', function(e) {
+            var touch = e.targetTouches[0];
+            var point = {
+                x: touch.pageX || touch.clientX,
+                y: touch.pageY || touch.clientY
+            };
+            self.writeBegin(point);
+        });
+        this.canvas.addEventListener('touchend', function(e) {
+            var touch = e.changedTouches[0];
+            var point = {
+                x: touch.pageX,
+                y: touch.pageY
+            };
+            self.writeEnd(point);
+        });
+        this.canvas.addEventListener('touchmove', function(e) {
+            var touch = e.targetTouches[0];
+            var point = {
+                x: touch.pageX,
+                y: touch.pageY
+            };
+            self.writeEnd(point);
+        });
+        this.canvas.addEventListener('touchmove', function(e) {
+            var touch = e.targetTouches[0];
+            var point = {
+                x: touch.pageX,
+                y: touch.pageY
+            };
+            self.writing(point);
+        });
+ 
+        this.canvasInit();
+        this.canvasClear();
+ 
+        this.option = obj;
+        obj.control = {
+            clearCanvas: self.canvasClear
+        };
+    }
+ 
+    /**
+     * 初始化调用
+     * 设置参数
+     */
+    var writeCanvas = new WriteFont('canvas', {
+        borderWidth: 10,
+        writeWidth:3,
+        borderColor: '#ff6666',
+        isWriteName:true //签名模式
+    });
+    var allList = [];
+    document.getElementById('clear').onclick = function() {
+        writeCanvas.option.control.clearCanvas();
+    };
+    document.getElementById('save_data').onclick = function() {
+        var content = JSON.stringify(allList);
+        var fileName = `${allList.length}_${new Date().toJSON()}`;
+        console.log(content);
+        console.log(fileName)
+        var blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, `${fileName}.PyFontDB`);
+    };
+    var tempList = {};
+    document.getElementById('save').onclick = function() {
+        var nowUsername = document.getElementById("username").value;
+        try{
+        if(tempList[nowUsername].length == nowUsername.length){
+            var range_num = 0;
+            var id = setInterval(function(){
+                if(range_num>4){
+                    clearInterval(id);
+                }
+                if(document.getElementById("tips").style.display=="none"){
+                    document.getElementById("tips").style.display="block"; 
+                }else{
+                    document.getElementById("tips").style.display="none";
+                }
+                range_num+=1;
+            },1000);
+            // do something ...
+            document.getElementById("output1").innerHTML = ""; // clear catche
+            var imageHTMLDATA = "";
+            var imageDataJSON = [];
+            for(var data in tempList[nowUsername]){
+                var base64Data = tempList[nowUsername][data]
+                imageHTMLDATA +=  `<img src = "${base64Data}" style="width: 90px;height: 50px;"></img>`
+                imageDataJSON.push({"text":nowUsername[data],"data":base64Data})
+            }
+            
+            document.getElementById("output").innerHTML = document.getElementById("output").innerHTML + `<div style="display: flex;"><a>名称：${nowUsername} 数据：</a>${imageHTMLDATA}</div>`
+            allList.push({name:nowUsername,data:imageDataJSON});
+            return;
+        }
+        }catch(e){}
+        var fontData = writeCanvas.saveAsImg();
+        if(nowUsername==""){
+            alert("name is empty")
+            return;
+        }
+        try{tempList[nowUsername].push(fontData);}catch(e){tempList[nowUsername] = [fontData];}
+        
+        //var old = document.getElementById("output").innerHTML 
+        //document.getElementById("output").innerHTML = old + "<a>123</a>"
+        document.getElementById("output1").innerHTML = document.getElementById("output1").innerHTML + `<div style="display: flex;"><a>名称：${nowUsername},总共${nowUsername.length}个字,当前为第${tempList[nowUsername].length}个字，数据为：</a><img src = "${fontData}" style="width: 90px;height: 50px;"></img></div>`
+        
+    };
+</script>
+</html>
